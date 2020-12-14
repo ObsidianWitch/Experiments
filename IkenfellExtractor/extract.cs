@@ -6,11 +6,18 @@ using System.Drawing.Imaging;
 using GE = GameEngine;
 using LW = LittleWitch;
 
-static class Extractor {
+class Extractor {
+    public Extractor() {
+        GE.Platform.Init();
+        GE.Platform.ContentRoot = "Ikenfell/";
+        GE.Platform.SaveRoot = "Out/";
+        var game = new Game();
+    }
+
     // Note: Couldn't use GE.Bitmap.Save(), it throws the following exception:
     // "System.DllNotFoundException: utilities.dll [...]". And indeed, the DLL
     // is missing from the game directory.
-    public static void img2png(GE.Bitmap img, String fileout) {
+    public void img2png(GE.Bitmap img, String fileout) {
         var data = img.Data.SelectMany(item =>
             new [] { item.B, item.G, item.R, item.A }).ToArray();
 
@@ -25,7 +32,7 @@ static class Extractor {
         }}
     }
 
-    public static void imgs2pngs(String dirin, String dirout) {
+    public void imgs2pngs(String dirin, String dirout) {
         var imagePaths = Directory.GetFiles($"{dirin}/Atlas/", "*.img");
         foreach (var path in imagePaths) {
             var img = new GE.Bitmap(path);
@@ -35,11 +42,5 @@ static class Extractor {
     }
 }
 
-// init
-GE.Platform.Init();
-GE.Platform.ContentRoot = "Ikenfell/"
-GE.Platform.SaveRoot = "Out/";
-var game = new LW.Game();
-
-// extract
-Extractor.imgs2pngs(GE.Platform.ContentRoot, GE.Platform.SaveRoot);
+var extractor = new Extractor();
+extractor.imgs2pngs(GE.Platform.ContentRoot, GE.Platform.SaveRoot);
