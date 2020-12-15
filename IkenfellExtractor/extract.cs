@@ -32,15 +32,17 @@ class Extractor {
         }}
     }
 
-    public void imgs2pngs(String dirin, String dirout) {
-        var imagePaths = Directory.GetFiles($"{dirin}/Atlas/", "*.img");
+    public void imgs2pngs() {
+        var imagePaths = Directory.GetFiles(
+            $"{GE.Platform.ContentRoot}/Atlas/",
+            "*.img");
         foreach (var path in imagePaths) {
             var img = new GE.Bitmap(path);
             var stem = Path.GetFileNameWithoutExtension(path);
-            img2png(img, $"{dirout}/i_{stem}.png");
+            img2png(img, $"{GE.Platform.SaveRoot}/i_{stem}.png");
         }
     }
 }
 
 var extractor = new Extractor();
-extractor.imgs2pngs(GE.Platform.ContentRoot, GE.Platform.SaveRoot);
+extractor.imgs2pngs();
