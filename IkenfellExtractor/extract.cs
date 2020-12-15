@@ -11,7 +11,7 @@ class Extractor {
         GE.Platform.Init();
         GE.Platform.ContentRoot = "Ikenfell/";
         GE.Platform.SaveRoot = "Out/";
-        var game = new Game();
+        var game = new LW.Game();
     }
 
     // Note: Couldn't use GE.Bitmap.Save(), it throws the following exception:
