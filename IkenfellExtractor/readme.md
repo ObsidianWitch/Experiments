@@ -15,11 +15,12 @@
 [...]
 ```
 
-The images are stored in `Atlas/*.img`. The first step was to try to find what type of image format it was: a standard one? Standard w/ truncated header? Raw? Compressed? I tried `file Atlas/*.img` to find out if this was a standard image format but it did not give any useful information (`data` or `SysEx File -`).
 
-By opening the files in an hexadecimal editor, I noticed the two first uint32 seemed to be in little-endian order and seemed to represent the width and height of the image: 240x160 (resolution of the game) for `ending_*.img` and 4096x2048 for `atlas.img`.
+The images are stored in `Atlas/*.img`. The first step was to try to find out what type of image format it was: a standard one? Standard w/ truncated header? Raw? Compressed? The `file Atlas/*.img` command didn't seem to recognize any standard image format (output: `data` or `SysEx File -`).
 
-It wasn't a raw format, the file size seemed too small for that. For example, `ending_perty.img` is 5063 Bytes (`stat`). If we assume the image is 240x160, then a raw RGB image image would be at least `240*160*3 = 115200 Bytes`. And sure, if we create a 240x160 white image in GIMP and save it as BMP we obtain a 115322 Bytes file. And if we save it as raw PPM we obtain a 115261 Bytes. The extra bytes are from the headers. So we can assume the image format has some kind of compression.
+By opening the files in an hexadecimal editor I noticed the two first little-endian uint32 seemed to represent the width and height of the image: 240x160 (resolution of the game) for `ending_*.img` and 4096x2048 for `atlas.img`.
+
+It wasn't a raw format, the file size seemed too small for that. For example, `ending_perty.img` is 5063 Bytes (`stat`). If we assume the image is 240x160, then a raw RGB image would be at least `240*160*3 = 115200 Bytes`. And sure, if we create a 240x160 white image in GIMP and save it as BMP we obtain a 115322 Bytes file; the extra bytes are from the headers. So we can assume the image format has some kind of compression.
 
 I noticed there was a lot of `FF` bytes in the files and hypothesized it was opacity. I then assumed the previous bytes where `?RGBA`. After some fumbling around I noticed the first byte was the number of occurrences of a pixel, making this a [Run-length encoding](https://en.wikipedia.org/wiki/Run-length_encoding) scheme.
 
@@ -97,4 +98,4 @@ BINFORMAT = cs.Struct(
 
 ## C# extractor (Unfinished)
 
-I then realised I probably could have used the game libraries (`GameEngine.dll` and `LittleWitch.dll`) in a [Mono](https://www.mono-project.com/) project. I started implementing it in `extract.cs` using Mono's `csharp` interpreter but I didn't have the energy to finish it. You can run it with `./extract.cs`.
+I then realized I probably could have used the game libraries (`GameEngine.dll` and `LittleWitch.dll`) in a [Mono](https://www.mono-project.com/) project. I started implementing it in `extract.cs` using Mono's `csharp` interpreter but didn't have the motivation to finish it. You can run it with `./extract.cs`.
