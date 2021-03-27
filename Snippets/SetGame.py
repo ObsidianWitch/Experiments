@@ -10,3 +10,13 @@
 #   same or different
 # * board: 12 cards
 # * deck: 81 cards, covers all the possible combination of features once
+
+import curses, itertools
+
+options = { 'letter':'ABC',
+            'number': (1, 2, 3),
+            'color': (1, 2, 3),
+            'emphasis': (curses.A_NORMAL, curses.A_BOLD, curses.A_UNDERLINE), }
+deck = list( dict(zip(options.keys(), values))
+             for values in itertools.product(*options.values()) )
+print(deck) # DEBUG
