@@ -11,7 +11,7 @@
 # * board: 12 cards
 # * deck: 81 cards, covers all the possible combination of features once
 
-import curses, itertools
+import curses, itertools, random
 
 options = { 'letter':'ABC',
             'number': (1, 2, 3),
@@ -19,4 +19,5 @@ options = { 'letter':'ABC',
             'emphasis': (curses.A_NORMAL, curses.A_BOLD, curses.A_UNDERLINE), }
 deck = list( dict(zip(options.keys(), values))
              for values in itertools.product(*options.values()) )
+random.shuffle(deck)
 print(deck) # DEBUG
