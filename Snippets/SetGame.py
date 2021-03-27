@@ -13,11 +13,20 @@
 
 import curses, itertools, random
 
-options = { 'letter':'ABC',
-            'number': (1, 2, 3),
-            'color': (1, 2, 3),
-            'emphasis': (curses.A_NORMAL, curses.A_BOLD, curses.A_UNDERLINE), }
-deck = list( dict(zip(options.keys(), values))
-             for values in itertools.product(*options.values()) )
-random.shuffle(deck)
-print(deck) # DEBUG
+class Game:
+    OPTIONS = {
+        'letter':'ABC',
+        'number': (1, 2, 3),
+        'color': (1, 2, 3),
+        'emphasis': (curses.A_NORMAL, curses.A_BOLD, curses.A_UNDERLINE),
+    }
+
+    def __init__(self):
+        self.deck = list(
+            dict(zip(self.OPTIONS.keys(), values))
+            for values in itertools.product(*self.OPTIONS.values())
+        )
+        random.shuffle(self.deck)
+
+game = Game()
+print(game.deck) # DEBUG
