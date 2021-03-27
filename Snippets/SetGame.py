@@ -28,5 +28,7 @@ class Game:
         )
         random.shuffle(self.deck)
 
+        self.deck, self.board = self.deck[:-12], self.deck[-12:]
+
 game = Game()
-print(game.deck) # DEBUG
+print(len(game.deck), len(game.board)) # DEBUG
