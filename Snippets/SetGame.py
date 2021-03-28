@@ -13,6 +13,11 @@
 
 import itertools, random, curses
 
+def clamp(value, min, max):
+    if value < min: return min
+    if value > max: return max
+    return value
+
 class Game:
     CARD_OPTIONS = {
         'letter':'ABC',
@@ -29,14 +34,28 @@ class Game:
         random.shuffle(self.deck)
         self.deck, self.board = self.deck[:-12], self.deck[-12:]
 
+        self.cursor = 0
+        self.selected = set()
+
     def print_board(self, stdscr):
         for i, card in enumerate(self.board):
+            if self.cursor == i:
+                stdscr.addstr('>')
+            else:
+                stdscr.addstr(' ')
+
+            if i in self.selected:
+                stdscr.addstr('*')
+            else:
+                stdscr.addstr(' ')
+
             stdscr.addstr(
-                (card["letter"] * card["number"]).ljust(3) + '\n',
+                f'{(card["letter"] * card["number"]).ljust(3)}\n',
                 curses.color_pair(card['color']) | card['emphasis']
             )
 
     def loop(self, stdscr):
+        curses.curs_set(0)
         curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_RED, -1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
@@ -44,6 +63,19 @@ class Game:
 
         self.print_board(stdscr)
         while (key := stdscr.getch()) != ord('q'):
+            # update
+            if key == curses.KEY_UP:
+                self.cursor = clamp(self.cursor - 1, 0, len(self.board) - 1)
+            elif key == curses.KEY_DOWN:
+                self.cursor = clamp(self.cursor + 1, 0, len(self.board) - 1)
+            elif key == ord('\t'):
+                if self.cursor not in self.selected:
+                    if len(self.selected) < 3:
+                        self.selected.add(self.cursor)
+                else:
+                    self.selected.remove(self.cursor)
+
+            # draw
             stdscr.clear()
             self.print_board(stdscr)
 
