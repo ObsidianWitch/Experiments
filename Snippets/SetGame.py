@@ -54,6 +54,9 @@ class Game:
                 curses.color_pair(card['color']) | card['emphasis']
             )
 
+        stdscr.addstr(f'\ndeck:{len(self.deck)}')
+        stdscr.addstr(f'\nq: quit, tab: select card, enter: check set')
+
     def loop(self, stdscr):
         curses.curs_set(0)
         curses.use_default_colors()
