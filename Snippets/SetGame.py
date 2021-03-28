@@ -19,6 +19,7 @@ def clamp(value, min, max):
     return value
 
 class Game:
+    GRID_WIDTH = 3
     CARD_OPTIONS = {
         'letter':'ABC',
         'number': (1, 2, 3),
@@ -50,9 +51,11 @@ class Game:
                 stdscr.addstr(' ')
 
             stdscr.addstr(
-                f'{(card["letter"] * card["number"]).ljust(3)}\n',
+                f'{(card["letter"] * card["number"]).ljust(3)}',
                 curses.color_pair(card['color']) | card['emphasis']
             )
+            if (i + 1) % self.GRID_WIDTH == 0:
+                stdscr.addstr('\n')
 
         stdscr.addstr(f'\ndeck:{len(self.deck)}')
         stdscr.addstr(f'\nq: quit, tab: select card, enter: check set')
@@ -67,16 +70,21 @@ class Game:
         self.print_board(stdscr)
         while (key := stdscr.getch()) != ord('q'):
             # update
-            if key == curses.KEY_UP:
-                self.cursor = clamp(self.cursor - 1, 0, len(self.board) - 1)
+            if key == curses.KEY_LEFT:
+                self.cursor -= 1
+            elif key == curses.KEY_RIGHT:
+                self.cursor += 1
+            elif key == curses.KEY_UP:
+                self.cursor -= self.GRID_WIDTH
             elif key == curses.KEY_DOWN:
-                self.cursor = clamp(self.cursor + 1, 0, len(self.board) - 1)
+                self.cursor += self.GRID_WIDTH
             elif key == ord('\t'):
                 if self.cursor not in self.selected:
                     if len(self.selected) < 3:
                         self.selected.add(self.cursor)
                 else:
                     self.selected.remove(self.cursor)
+            self.cursor = clamp(self.cursor, 0, len(self.board) - 1)
 
             # draw
             stdscr.clear()
