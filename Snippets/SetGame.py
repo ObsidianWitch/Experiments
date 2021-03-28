@@ -18,10 +18,9 @@ def clamp(value, min, max):
     if value > max: return max
     return value
 
-class Game:
-    GRID_WIDTH = 3
+class Model:
     CARD_OPTIONS = {
-        'letter':'ABC',
+        'letter': 'ABC',
         'number': (1, 2, 3),
         'color': (1, 2, 3),
         'emphasis': (curses.A_NORMAL, curses.A_BOLD, curses.A_UNDERLINE),
@@ -35,11 +34,16 @@ class Game:
         random.shuffle(self.deck)
         self.deck, self.board = self.deck[:-12], self.deck[-12:]
 
+class Game:
+    GRID_WIDTH = 3
+
+    def __init__(self, model):
+        self.model = model
         self.cursor = 0
         self.selected = set()
 
     def print_board(self, stdscr):
-        for i, card in enumerate(self.board):
+        for i, card in enumerate(self.model.board):
             if self.cursor == i:
                 stdscr.addstr('>')
             else:
@@ -57,7 +61,7 @@ class Game:
             if (i + 1) % self.GRID_WIDTH == 0:
                 stdscr.addstr('\n')
 
-        stdscr.addstr(f'\ndeck:{len(self.deck)}')
+        stdscr.addstr(f'\ndeck:{len(self.model.deck)}')
         stdscr.addstr(f'\nq: quit, tab: select card, enter: check set')
 
     def loop(self, stdscr):
@@ -84,7 +88,7 @@ class Game:
                         self.selected.add(self.cursor)
                 else:
                     self.selected.remove(self.cursor)
-            self.cursor = clamp(self.cursor, 0, len(self.board) - 1)
+            self.cursor = clamp(self.cursor, 0, len(self.model.board) - 1)
 
             # draw
             stdscr.clear()
@@ -93,4 +97,5 @@ class Game:
     def start(self):
         curses.wrapper(self.loop)
 
-Game().start()
+model = Model()
+Game(model).start()
