@@ -38,5 +38,5 @@ else
     systemd-inhibit \
         --what='handle-power-key:handle-suspend-key:handle-hibernate-key:handle-lid-switch:handle-reboot-key' \
         --why='power manager' --mode='block' \
-        "$0" --launch
+        "$BASH_SOURCE" --launch
 fi
