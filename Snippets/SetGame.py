@@ -73,7 +73,35 @@ class Game:
         self.cursor = 0
         self.selected = dict()
 
-    def print_board(self, stdscr):
+    def update(self, key):
+        if key == curses.KEY_LEFT:
+            self.cursor -= 1
+        elif key == curses.KEY_RIGHT:
+            self.cursor += 1
+        elif key == curses.KEY_UP:
+            self.cursor -= self.GRID_WIDTH
+        elif key == curses.KEY_DOWN:
+            self.cursor += self.GRID_WIDTH
+        self.cursor = clamp(self.cursor, 0, len(self.model.board) - 1)
+
+        if key == ord('n'):
+            self.__init__()
+        elif key == ord('d'):
+            self.model.deal(3)
+        elif key == ord('\t'):
+            if self.cursor not in self.selected:
+                if len(self.selected) < 3:
+                    self.selected[self.cursor] = self.model.board[self.cursor]
+            else:
+                del self.selected[self.cursor]
+        elif key == ord('\n'):
+            if self.model.handle_gameset(self.selected):
+                self.selected.clear()
+                if (not self.model.deck) and (not self.model.board):
+                    self.__init__()
+
+    def draw(self, stdscr):
+        stdscr.clear()
         for i, card in enumerate(self.model.board):
             if self.cursor == i:
                 stdscr.addstr('>')
@@ -103,38 +131,10 @@ class Game:
         curses.init_pair(2, curses.COLOR_GREEN, -1)
         curses.init_pair(3, curses.COLOR_BLUE, -1)
 
-        self.print_board(stdscr)
+        self.draw(stdscr)
         while (key := stdscr.getch()) != ord('q'):
-            # update
-            if key == curses.KEY_LEFT:
-                self.cursor -= 1
-            elif key == curses.KEY_RIGHT:
-                self.cursor += 1
-            elif key == curses.KEY_UP:
-                self.cursor -= self.GRID_WIDTH
-            elif key == curses.KEY_DOWN:
-                self.cursor += self.GRID_WIDTH
-            self.cursor = clamp(self.cursor, 0, len(self.model.board) - 1)
-
-            if key == ord('n'):
-                self.__init__()
-            elif key == ord('d'):
-                self.model.deal(3)
-            elif key == ord('\t'):
-                if self.cursor not in self.selected:
-                    if len(self.selected) < 3:
-                        self.selected[self.cursor] = self.model.board[self.cursor]
-                else:
-                    del self.selected[self.cursor]
-            elif key == ord('\n'):
-                if self.model.handle_gameset(self.selected):
-                    self.selected.clear()
-                    if (not self.model.deck) and (not self.model.board):
-                        self.__init__()
-
-            # draw
-            stdscr.clear()
-            self.print_board(stdscr)
+            self.update(key)
+            self.draw(stdscr)
 
     def start(self):
         curses.wrapper(self.loop)
