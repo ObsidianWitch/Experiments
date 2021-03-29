@@ -32,7 +32,33 @@ class Model:
             for values in itertools.product(*self.CARD_OPTIONS.values())
         )
         random.shuffle(self.deck)
-        self.deck, self.board = self.deck[:-12], self.deck[-12:]
+        self.board = []
+        self.deal(12)
+
+    def deal(self, n):
+        self.board += self.deck[-n:]
+        self.deck = self.deck[:-n]
+
+    def check_gameset(self, cards):
+        if len(cards) != 3: return False
+
+        for k in cards[0].keys():
+            if not(
+                # a == b && b == c -> a == c: only need to check against 1st element
+                all(cards[0][k] == c[k] for c in cards[1:])
+                # a != b && b != c !-> a != c: need to check all combinations
+                or all(c1[k] != c2[k] for c1, c2 in itertools.combinations(cards, 2))
+            ): return False
+        return True
+
+    def check_remove_gameset(self, selected):
+        if self.check_gameset(list(selected.values())):
+            # remove elements in reverse index order to avoid reindexing problems
+            for i in sorted(selected, reverse=True):
+                del self.board[i]
+            self.deal(3)
+            return True
+        return False
 
 class Game:
     GRID_WIDTH = 3
@@ -40,7 +66,7 @@ class Game:
     def __init__(self, model):
         self.model = model
         self.cursor = 0
-        self.selected = set()
+        self.selected = dict()
 
     def print_board(self, stdscr):
         for i, card in enumerate(self.model.board):
@@ -82,13 +108,17 @@ class Game:
                 self.cursor -= self.GRID_WIDTH
             elif key == curses.KEY_DOWN:
                 self.cursor += self.GRID_WIDTH
-            elif key == ord('\t'):
+            self.cursor = clamp(self.cursor, 0, len(self.model.board) - 1)
+
+            if key == ord('\t'):
                 if self.cursor not in self.selected:
                     if len(self.selected) < 3:
-                        self.selected.add(self.cursor)
+                        self.selected[self.cursor] = self.model.board[self.cursor]
                 else:
-                    self.selected.remove(self.cursor)
-            self.cursor = clamp(self.cursor, 0, len(self.model.board) - 1)
+                    del self.selected[self.cursor]
+            elif key == ord('\n'):
+                if self.model.check_remove_gameset(self.selected):
+                    self.selected.clear()
 
             # draw
             stdscr.clear()
