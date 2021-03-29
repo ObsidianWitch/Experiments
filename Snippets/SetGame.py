@@ -93,7 +93,7 @@ class Game:
                 stdscr.addstr('\n')
 
         stdscr.addstr(f'\ndeck:{len(self.model.deck)} score:{self.model.score}')
-        stdscr.addstr(f'\nn: new game, q: quit')
+        stdscr.addstr(f'\nn: new game, d: deal, q: quit')
         stdscr.addstr(f'\narrows: move cursor, tab: select card, enter: check set')
 
     def loop(self, stdscr):
@@ -118,6 +118,8 @@ class Game:
 
             if key == ord('n'):
                 self.__init__()
+            elif key == ord('d'):
+                self.model.deal(3)
             elif key == ord('\t'):
                 if self.cursor not in self.selected:
                     if len(self.selected) < 3:
