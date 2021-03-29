@@ -39,6 +39,7 @@ class Model:
         self.board += self.deck[-n:]
         self.deck = self.deck[:-n]
 
+    # Check if `cards` constitute a set as specified in the game rules.
     def check_gameset(self, cards):
         if len(cards) != 3: return False
 
@@ -51,7 +52,9 @@ class Model:
             ): return False
         return True
 
-    def check_remove_gameset(self, selected):
+    # Check if the `selected` cards constitute a set as specified in the game
+    # rules. If it is the case, remove them from the board and deal 3 cards.
+    def handle_gameset(self, selected):
         if self.check_gameset(list(selected.values())):
             # remove elements in reverse index order to avoid reindexing problems
             for i in sorted(selected, reverse=True):
@@ -63,8 +66,8 @@ class Model:
 class Game:
     GRID_WIDTH = 3
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self):
+        self.model = Model()
         self.cursor = 0
         self.selected = dict()
 
@@ -117,8 +120,10 @@ class Game:
                 else:
                     del self.selected[self.cursor]
             elif key == ord('\n'):
-                if self.model.check_remove_gameset(self.selected):
+                if self.model.handle_gameset(self.selected):
                     self.selected.clear()
+                    if (not self.model.deck) and (not self.model.board):
+                        self.__init__()
 
             # draw
             stdscr.clear()
@@ -127,5 +132,4 @@ class Game:
     def start(self):
         curses.wrapper(self.loop)
 
-model = Model()
-Game(model).start()
+Game().start()
