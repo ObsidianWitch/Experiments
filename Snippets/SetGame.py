@@ -34,6 +34,7 @@ class Model:
         random.shuffle(self.deck)
         self.board = []
         self.deal(12)
+        self.score = 0
 
     def deal(self, n):
         self.board += self.deck[-n:]
@@ -56,6 +57,7 @@ class Model:
     # rules. If it is the case, remove them from the board and deal 3 cards.
     def handle_gameset(self, selected):
         if self.check_gameset(list(selected.values())):
+            self.score += 1
             # remove elements in reverse index order to avoid reindexing problems
             for i in sorted(selected, reverse=True):
                 del self.board[i]
@@ -90,7 +92,7 @@ class Game:
             if (i + 1) % self.GRID_WIDTH == 0:
                 stdscr.addstr('\n')
 
-        stdscr.addstr(f'\ndeck:{len(self.model.deck)}')
+        stdscr.addstr(f'\ndeck:{len(self.model.deck)} score:{self.model.score}')
         stdscr.addstr(f'\nq: quit, tab: select card, enter: check set')
 
     def loop(self, stdscr):
