@@ -18,6 +18,11 @@ def clamp(value, min, max):
     if value > max: return max
     return value
 
+# Patch curses.window.addstr to bypass errors when writing outside the window.
+def addstr(stdscr, *args):
+    try: stdscr.addstr(*args)
+    except curses.error: pass
+
 class Model:
     CARD_OPTIONS = {
         'letter': 'ABC',
@@ -66,7 +71,7 @@ class Model:
         return False
 
 class Game:
-    GRID_WIDTH = 3
+    GRID_WIDTH = 9
 
     def __init__(self):
         self.model = Model()
@@ -104,25 +109,25 @@ class Game:
         stdscr.clear()
         for i, card in enumerate(self.model.board):
             if self.cursor == i:
-                stdscr.addstr('>')
+                addstr(stdscr, '>')
             else:
-                stdscr.addstr(' ')
+                addstr(stdscr, ' ')
 
             if i in self.selected:
-                stdscr.addstr('*')
+                addstr(stdscr, '*')
             else:
-                stdscr.addstr(' ')
+                addstr(stdscr, ' ')
 
-            stdscr.addstr(
+            addstr(stdscr,
                 f'{(card["letter"] * card["number"]).ljust(3)}',
                 curses.color_pair(card['color']) | card['emphasis']
             )
             if (i + 1) % self.GRID_WIDTH == 0:
-                stdscr.addstr('\n')
+                addstr(stdscr, '\n')
 
-        stdscr.addstr(f'\ndeck:{len(self.model.deck)} score:{self.model.score}')
-        stdscr.addstr(f'\nn: new game, d: deal, q: quit')
-        stdscr.addstr(f'\narrows: move cursor, tab: select card, enter: check set')
+        addstr(stdscr, f'\ndeck:{len(self.model.deck)} score:{self.model.score}')
+        addstr(stdscr, f'\nn: new game, d: deal, q: quit')
+        addstr(stdscr, f'\narrows: move cursor, tab: select card, enter: check set')
 
     def loop(self, stdscr):
         curses.curs_set(0)
