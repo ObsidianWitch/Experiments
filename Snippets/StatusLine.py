@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import json, asyncio, datetime, sys, logging, os
+import json, asyncio, datetime, sys, logging, os, subprocess, signal
 from pathlib import Path
 from gi.repository import GLib
-import subprocess
 
-def sh_out(*args):
-    return subprocess.run(args, check=True, capture_output=True, text=True).stdout
+def sh_out(*args, **kwargs):
+    defaults = { 'check':True, 'capture_output':True, 'text':True, }
+    return subprocess.run(args, **(defaults | kwargs)).stdout
 
-# doc: https://i3wm.org/docs/i3bar-protocol.html
+# doc: https://i3wm.org/docs/i3bar-protocol.html#_blocks_in_detail
 class Block(dict):
     DEFAULTS = {
         'full_text': '',
@@ -27,6 +27,8 @@ class Block(dict):
         self['name'] = self.__class__.__name__
         self['instance'] = str(id(self))
         self.statusline = statusline
+
+    def on_signal(self, sig): pass
 
     def on_click(self, event):
         self.out_once()
@@ -102,6 +104,36 @@ class BNetwork(Block):
             logging.debug(line)
             self.out_once()
 
+class BVolume(Block):
+    ICONS = { 'false': '', 'true': '', }
+
+    def on_signal(self, sig):
+        if sig == signal.SIGRTMIN+15:
+            self.out_once()
+
+    def on_click(self, event):
+        if event['button'] == 1:
+            subprocess.run(['pamixer', '--toggle-mute'])
+        elif event['button'] == 3:
+            subprocess.run(['pavucontrol'])
+        elif event['button'] == 4:
+            subprocess.run(['pamixer', '--increase', '5'])
+        elif event['button'] == 5:
+            subprocess.run(['pamixer', '--decrease', '5'])
+        self.out_once()
+
+    def out_once(self):
+        pamixer = sh_out('pamixer', '--get-mute', '--get-volume', check=False)
+        mute = pamixer.split()[0]
+        volume = pamixer.split()[1]
+        self['full_text'] = f'{self.ICONS[mute]} {volume}%'
+        self.statusline.print()
+
+    async def out_loop(self):
+        while True:
+            self.out_once()
+            await asyncio.sleep(5)
+
 # StatusLine is a status line following the i3bar input protocol.
 # doc: https://i3wm.org/docs/i3bar-protocol.html
 class StatusLine:
@@ -123,7 +155,16 @@ class StatusLine:
             logging.debug(event)
             self.blocks[event['instance']].on_click(event)
 
-    def insert(self, clsblock, **kwargs):
+    # Propagate signal `sig` to all the blocks.
+    def signal_handler(self, sig):
+        logging.debug(f'signal_handler {sig}')
+        for block in self.blocks.values():
+            block.on_signal(sig)
+
+    def add_signal_handler(self, sig):
+        self.loop.add_signal_handler(sig, lambda: self.signal_handler(sig))
+
+    def add_block(self, clsblock, **kwargs):
         block = clsblock(statusline=self, **kwargs)
         self.blocks[block['instance']] = block
         task = self.loop.create_task(block.out_loop())
@@ -138,18 +179,21 @@ class StatusLine:
         # async tasks
         self.loop = asyncio.get_event_loop()
         self.loop.create_task(self.click_handler())
-        self.insert(BCPU)
-        self.insert(BRAM)
-        self.insert(BDisk)
-        self.insert(BNetwork)
-        self.insert(BDateTime)
+        self.add_signal_handler(signal.SIGRTMIN+15)
+        self.add_block(BCPU)
+        self.add_block(BRAM)
+        self.add_block(BDisk)
+        self.add_block(BVolume)
+        self.add_block(BNetwork)
+        self.add_block(BDateTime)
         self.loop.run_forever()
 
 if __name__ == "__main__":
-    if ('-d' in sys.argv) or ('--debug' in sys.argv):
+    if '--debug' in sys.argv:
         logging.basicConfig(
             filename = Path(GLib.get_user_data_dir()) / 'dotstatus.log',
             level    = logging.DEBUG
         )
+        logging.debug(f'Start logging {os.getpid()}')
 
     StatusLine().main()
