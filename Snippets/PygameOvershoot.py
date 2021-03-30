@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys, pygame
 
 class RectInt(pygame.Rect):
