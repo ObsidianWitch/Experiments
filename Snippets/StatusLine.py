@@ -135,6 +135,8 @@ class BVolume(Block):
             await asyncio.sleep(5)
 
 # StatusLine is a status line following the i3bar input protocol.
+# * i3bar stdout: json click events -> stdin status_command
+# * status_command stdout: status line json -> read by i3bar
 # doc: https://i3wm.org/docs/i3bar-protocol.html
 class StatusLine:
     def __init__(self):
