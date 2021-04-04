@@ -22,6 +22,11 @@ def retrieve_atlas():
     with (BUILDPATH / 'atlas.png').open(mode='wb') as f:
         f.write(atlas_png)
 
+    # atlas.json
+    atlas_data = driver.execute_script('return JSON.stringify(A.frames)')
+    with (BUILDPATH / 'atlas.json').open(mode='w') as f:
+        f.write(atlas_data)
+
     driver.quit()
 
 retrieve_atlas()
