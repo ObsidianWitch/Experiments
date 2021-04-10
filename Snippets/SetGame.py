@@ -50,11 +50,11 @@ class Model:
         if len(cards) != 3: return False
 
         for k in cards[0].keys():
-            if not(
-                # a == b && b == c -> a == c: only need to check against 1st element
-                all(cards[0][k] == c[k] for c in cards[1:])
-                # a != b && b != c !-> a != c: need to check all combinations
-                or all(c1[k] != c2[k] for c1, c2 in itertools.combinations(cards, 2))
+            if not (
+                # a == b && b == c -> a == c
+                (cards[0][k] == cards[1][k] == cards[2][k])
+                # a != b && b != c -/> a != c
+                or (cards[0][k] != cards[1][k] != cards[2][k] != cards[0][k])
             ): return False
         return True
 
