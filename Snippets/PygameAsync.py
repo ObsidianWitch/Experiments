@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, asyncio
+import sys, asyncio, argparse
 import pygame # https://pypi.org/project/pygame/
 
 class Window:
@@ -47,6 +47,20 @@ class Window:
         self.event_loop.create_task(self.asyncrender(render))
         self.event_loop.run_forever()
 
+    def syncloop(self, update, render):
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+
+            update(self.surface)
+            render(self.surface)
+            pygame.display.flip()
+
+            clock.tick(self.ups)
+            print(f"FPS: {clock.get_fps()}")
+
 class Game:
     def __init__(self):
         self.rect = pygame.Rect(10, 10, 10, 10)
@@ -65,6 +79,15 @@ class Game:
         pygame.draw.rect(target, (255, 255, 255), self.rect)
 
 if __name__ == "__main__":
-    window = Window(size=(160,200), ups=60, rps=30)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode', choices=('sync', 'async'))
+    parser.add_argument('ups', type=int)
+    parser.add_argument('rps', type=int) # unused in sync mode
+    args = parser.parse_args()
+
+    window = Window(size=(160,200), ups=args.ups, rps=args.rps)
     game = Game()
-    window.asyncloop(game.update, game.render)
+    if args.mode == 'sync':
+        window.syncloop(game.update, game.render)
+    elif args.mode == 'async':
+        window.asyncloop(game.update, game.render)
