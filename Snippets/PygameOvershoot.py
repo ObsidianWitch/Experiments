@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
         scene.update(screen)
         scene.draw(screen)
+        pygame.display.flip()
 
         clock.tick(60)
-        pygame.display.flip()
