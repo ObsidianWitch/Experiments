@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
-import sys, time, asyncio
+import sys, asyncio
 import pygame # https://pypi.org/project/pygame/
 
 class Window:
     def __init__(self, size, ups, rps):
         pygame.init()
         self.surface = pygame.display.set_mode(size)
-        self.clock = pygame.time.Clock()
         self.ups = ups
         self.rps = rps
 
-    async def update(self, fun):
+    async def asyncupdate(self, fun):
+        uclock = pygame.time.Clock()
         while True:
-            time_start = time.time()
+            time_start = pygame.time.get_ticks()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -21,27 +21,30 @@ class Window:
 
             fun(self.surface)
 
-            time_end = time.time()
-            delta = time_end - time_start
-            await asyncio.sleep((1 / self.ups) - delta)
-            print(f"UPS: {1 / (time.time() - time_start)}")
+            time_end = pygame.time.get_ticks()
+            delta = (time_end - time_start) / 1000
+            await asyncio.sleep(max(0, (1 / self.ups) - delta))
+            uclock.tick()
+            print(f"UPS: {uclock.get_fps()}")
 
-    async def render(self, fun):
+    async def asyncrender(self, fun):
+        rclock = pygame.time.Clock()
         while True:
-            time_start = time.time()
+            time_start = pygame.time.get_ticks()
 
             fun(self.surface)
             pygame.display.flip()
 
-            time_end = time.time()
-            delta = time_end - time_start
+            time_end = pygame.time.get_ticks()
+            delta = (time_end - time_start) / 1000
             await asyncio.sleep(max(0, (1 / self.rps) - delta))
-            print(f"RPS: {1 / (time.time() - time_start)}")
+            rclock.tick()
+            print(f"RPS: {rclock.get_fps()}")
 
-    def loop(self, update, render):
+    def asyncloop(self, update, render):
         self.event_loop = asyncio.get_event_loop()
-        self.event_loop.create_task(self.update(update))
-        self.event_loop.create_task(self.render(render))
+        self.event_loop.create_task(self.asyncupdate(update))
+        self.event_loop.create_task(self.asyncrender(render))
         self.event_loop.run_forever()
 
 class Game:
@@ -64,4 +67,4 @@ class Game:
 if __name__ == "__main__":
     window = Window(size=(160,200), ups=60, rps=30)
     game = Game()
-    window.loop(game.update, game.render)
+    window.asyncloop(game.update, game.render)
