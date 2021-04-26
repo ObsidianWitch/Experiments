@@ -10,6 +10,7 @@ power_manager() {
     xset dpms 0 0 300
     xss-lock i3lock &
 
+    # Monitor power supply and lid changes w/ upower
     upower --monitor | while read -r _; do
         local plugged capacity lid
         plugged=$(cat '/sys/class/power_supply/ADP1/online')
@@ -35,6 +36,7 @@ power_manager() {
 if [[ "$*" == '--launch' ]]; then
     power_manager
 else
+    # Note: without arguments `systemd-inhibit` lists all active inhibitors
     systemd-inhibit \
         --what='handle-power-key:handle-suspend-key:handle-hibernate-key:handle-lid-switch:handle-reboot-key' \
         --why='power manager' --mode='block' \
