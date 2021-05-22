@@ -98,4 +98,4 @@ BINFORMAT = cs.Struct(
 
 ## C# extractor (Unfinished)
 
-I then realized I probably could have used the game libraries (`GameEngine.dll` and `LittleWitch.dll`) in a [Mono](https://www.mono-project.com/) project. I started implementing it in `extract.cs` using Mono's `csharp` interpreter but didn't have the motivation to finish it. You can run it with `./extract.cs`.
+I then realized I probably could have used the game libraries (`GameEngine.dll` and `LittleWitch.dll`) in a [Mono](https://www.mono-project.com/) project. I partially implemented it in `extract.cs` using Mono's `csharp` interpreter. You can run it with `./extract.cs`.
