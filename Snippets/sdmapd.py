@@ -94,25 +94,31 @@ class SDMap:
             delta = ev_in.value - self.cache_in[ev_in.code]
             return [InputEvent(rel_out, int(delta * coeff))]
 
-    def vkbd_keypos(self):
+    # Returns the position on the virtual keyboard based on the position of
+    # ABS_HAT0. Return None if ABS_HAT0 isn't used.
+    def vkbd_keypos(self, evt_in):
         absinfo = self.dev_in.absinfo[EV_ABS.ABS_HAT0X]
-        y = abs((self.cache_in[EV_ABS.ABS_HAT0Y] - absinfo.maximum) * len(LAYOUT))
+
+        absx = evt_in.value() if evt_in.code == EV_ABS.ABS_HAT0X \
+          else self.cache_in[EV_ABS.ABS_HAT0X]
+        absy = evt_in.value() if evt_in.code == EV_ABS.ABS_HAT0Y \
+          else self.cache_in[EV_ABS.ABS_HAT0Y]
+        if absx == 0 and absy == 0: return None
+
+        y = abs((absy - absinfo.maximum) * len(LAYOUT))
         y /= (absinfo.maximum * 2) + 1
-        y = int(y)
-        x = (self.cache_in[EV_ABS.ABS_HAT0X] + absinfo.maximum) * len(LAYOUT[0])
+        x = (absx + absinfo.maximum) * len(LAYOUT[0])
         x /= (absinfo.maximum * 2) + 1
-        x = int(x)
-        return x, y
+        return (int(x), int(y))
 
     # Map a physical key to a key of the virtual keyboard depending on the current
-    # value of ABS_HAT0{X,Y}. If ABS_HAT0{X,Y} == (0, 0), send the `fallback_key`.
+    # value of ABS_HAT0{X,Y}. If ABS_HAT0 isn't used send the `fallback_key`.
     # `ki` corresponds to the section of the virtual keyboard to use.
     def key2vkdb(self, ev_in, ki, fallback_key):
         if ev_in.value == 0:
             return []
-        elif self.cache_in[EV_ABS.ABS_HAT0X] and self.cache_in[EV_ABS.ABS_HAT0Y]:
-            x, y = self.vkbd_keypos()
-            key = LAYOUT[y][x][ki]
+        elif keypos := self.vkbd_keypos(ev_in):
+            key = LAYOUT[keypos[1]][keypos[0]][ki]
             return [InputEvent(key, 1), InputEvent(key, 0)]
         else:
             return [InputEvent(fallback_key, 1), InputEvent(fallback_key, 0)]
