@@ -14,43 +14,49 @@ else:
     C = bpy.context
     D = bpy.data
 
-    # Facilitates debugging by storing a path alongside its data.
-    @dataclass
-    class ToEncode:
-        path: Path
-        data: typing.Any
-
-    # Dumps a blendfile into a json representation. The goal was to version
-    # blendfiles with git and be able to diff between them with this script.
-    # Unfortunately, the result is way too verbose to be useful.
+    # Dumps a blendfile into a json representation. This representation can then
+    # be used to diff between two versions of a blendfile, which is useful when
+    # combined with a VCS. Unfortunately, the result is way too verbose to be
+    # useful.
     class BlendEncoder(json.JSONEncoder):
         def default(self, obj):
-            print(obj) # DEBUG
+            if any(isinstance(obj, t) for t in (
+                    bpy.types.Screen, bpy.types.WindowManager, bpy.types.WorkSpace,
+                    bpy.types.Depsgraph, bpy.types.ImagePreview, bpy.types.Brush,
+                    bpy.types.Collection, bpy.types.Image, bpy.types.FreestyleLineStyle,
+                    bpy.types.ShaderNodeTree
+            )):
+                return '<SKIPPED>'
 
-            if isinstance(obj, ToEncode):
-                if isinstance(obj.data, bpy.types.NodeSocket):
-                    return obj.__repr__() # TODO
+            elif isinstance(obj, bpy.types.bpy_struct):
+                return {
+                    k: getattr(obj, k) for k in dir(obj)
+                    if not k.startswith('__')
+                        and not k.startswith('bl_')
+                        and not k.startswith('rna_')
+                        and not k.startswith('users_')
+                        and not callable(getattr(obj, k))
+                        and k not in ('id_data', 'original', 'brushes')
+                }
 
-                elif (isinstance(obj.data, bpy.types.Screen)
-                    or isinstance(obj.data, bpy.types.WindowManager)
-                    or isinstance(obj.data, bpy.types.WorkSpace)
-                    or isinstance(obj.data, bpy.types.Depsgraph)
-                ):
-                    return '<SKIPPED>'
+            elif isinstance(obj, bpy.types.bpy_prop_collection):
+                return obj.items()
 
-                elif isinstance(obj.data, bpy.types.bpy_struct):
-                    return {
-                        name: ToEncode(obj.path / str(name), getattr(obj.data, name))
-                        for name in dir(obj.data)
-                        if not name.startswith('__')
-                           and not callable(getattr(obj.data, name))
-                           and name not in ('bl_rna', 'rna_type', 'id_data', 'original')
-                    }
+            elif (isinstance(obj, bpy.types.bpy_prop_array)
+                or isinstance(obj, set)
+            ):
+                return list(obj)
 
-                elif isinstance(obj.data, bpy.types.bpy_prop_collection):
-                    return { k: ToEncode(obj.path / str(k), v) for k, v in obj.data.items() }
+            elif (isinstance(obj, mathutils.Color)
+                or isinstance(obj, mathutils.Vector)
+                or isinstance(obj, mathutils.Matrix)
+                or isinstance(obj, mathutils.Euler)
+                or isinstance(obj, mathutils.Quaternion)
+                or isinstance(obj, range)
+            ):
+                return str(obj)
 
             else:
                 return super().default(obj)
 
-    print(json.dumps(ToEncode(Path('/bpy/data'), D), cls=BlendEncoder, check_circular=True, sort_keys=True, indent=2))
+    json.dump(D, sys.stdout, cls=BlendEncoder, indent=2, sort_keys=True)
